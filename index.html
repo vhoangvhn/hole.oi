@@ -74,10 +74,10 @@
         // Hiện tại đang dùng ảnh SVG Base64 để code chạy ngay không cần file ngoài.
         const assetsConfig = {
             food: 'images/food.png', // Quả cầu vàng
-            box: 'image', // Thùng gỗ
-            truck: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSI1IiB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzNiODJmNiIvPjxyZWN0IHg9IjY1IiB5PSIzNSIgd2lkdGg9IjMwIiBoZWlnaHQ9IjQ1IiByeD0iNSIgZmlsbD0iIzNkOGVmOSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iODAiIHI9IjEwIiBmaWxsPSIjMzMzIi8+PGNpcmNsZSBjeD0iODAiIGN5PSI4MCIgcj0iMTAiIGZpbGw9IzMzMyIvPjwvc3ZnPg==', // Xe tải xanh
-            building: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSIxMCIgeT0iNSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjkwIiByeD0iNSIgZmlsbD0iIzEwYjk4MSIgc3Ryb2tlPSIjMDY1ZjQ2IiBzdHJva2Utd2lkdGg9IjQiLz48cmVjdCB4PSIyNSIgeT0iMjAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjYwIiB5PSIyMCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjI1IiB5PSI1MCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjYwIiB5PSI1MCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjwvc3ZnPg==', // Tòa nhà xanh
-            bomb: 'images/building',
+            box: 'images/box.png', // Thùng gỗ
+            truck: 'images/truck.png', // Xe tải xanh
+            building: 'images/building.png', // Tòa nhà xanh
+            bomb: 'images/bomb.png',
             hole: 'images/hole.png'// Bom đen
         };
 
@@ -289,15 +289,24 @@
 
             // 2. Vẽ Hố Đen (Vẫn giữ nguyên vòng tròn hiệu ứng)
             ctx.beginPath();
-            ctx.arc(hole.x, hole.y, hole.radius + 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(147, 51, 234, 0.35)';
+            ctx.arc(hole.x, hole.y, hole.radius + 6, 0, Math.PI * 2); // Aura rộng hơn chút
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.2)'; // Màu tím nhạt mờ hơn
             ctx.fill();
             ctx.closePath();
-            ctx.beginPath();
-            ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#111827';
-            ctx.fill();
-            ctx.closePath();
+
+            // --- B. Vẽ Hình ảnh Hố ---
+            const holeImg = loadedImages['hole']; // Lấy ảnh hố từ kho
+            if (holeImg) {
+                const diameter = hole.radius * 2;
+                // drawImage vẽ từ góc trên-trái. Ta cần lấy tâm trừ đi bán kính.
+                ctx.drawImage(holeImg, hole.x - hole.radius, hole.y - hole.radius, diameter, diameter);
+            } else {
+                // Phóng fallback nếu ảnh không load được (vẽ lõi đen cũ)
+                ctx.beginPath();
+                ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#111827';
+                ctx.fill();
+                ctx.closePath();
         }
         // ==========================================================
     </script>
