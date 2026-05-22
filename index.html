@@ -73,11 +73,12 @@
         // BẠN THAY ĐỔI ĐƯỜNG DẪN ẢNH TẠI ĐÂY
         // Hiện tại đang dùng ảnh SVG Base64 để code chạy ngay không cần file ngoài.
         const assetsConfig = {
-            food: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0OCIgZmlsbD0iI2ZiYmYyNCIgc3Ryb2tlPSIjYjc3OTFmIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjQwIiByPSIxNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjUpIi8+PC9zdmc+', // Quả cầu vàng
-            box: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iOTAiIGhlaWdodD0iOTAiIHJ4PSIxMCIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjc3OTFmIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJTTTUgMzBMOTUgMzBNTTUgNzBMOTUgNzBNTTMwIDVMMzAgOTVNTTcwIDVMNzAgOTUiIHN0cm9rZT0iI2I3NzkxZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PC9zdmc+', // Thùng gỗ
+            food: 'images/food.png', // Quả cầu vàng
+            box: 'image', // Thùng gỗ
             truck: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSI1IiB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzNiODJmNiIvPjxyZWN0IHg9IjY1IiB5PSIzNSIgd2lkdGg9IjMwIiBoZWlnaHQ9IjQ1IiByeD0iNSIgZmlsbD0iIzNkOGVmOSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iODAiIHI9IjEwIiBmaWxsPSIjMzMzIi8+PGNpcmNsZSBjeD0iODAiIGN5PSI4MCIgcj0iMTAiIGZpbGw9IzMzMyIvPjwvc3ZnPg==', // Xe tải xanh
             building: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSIxMCIgeT0iNSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjkwIiByeD0iNSIgZmlsbD0iIzEwYjk4MSIgc3Ryb2tlPSIjMDY1ZjQ2IiBzdHJva2Utd2lkdGg9IjQiLz48cmVjdCB4PSIyNSIgeT0iMjAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjYwIiB5PSIyMCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjI1IiB5PSI1MCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjYwIiB5PSI1MCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjwvc3ZnPg==', // Tòa nhà xanh
-            bomb: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjYwIiByPSIzOCIgZmlsbD0iIzMzMyIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJTTTUwIDIyIEw1MCA1IiBzdHJva2U9IiNmNTllMGIiIHN0cm9rZS13aWR0aD0iNiIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNSIgcj0iNSIgZmlsbD0iI2VmNDQ0NCIvPjxjaXJjbGUgY3g9IjcwIiBjeT0iNDAiIHI9IjEwIiBmaWxsPSJ4Z2JhKDI1NSwyNTUsMjU1LDAuMykiLz48L3N2Zz4=' // Bom đen
+            bomb: 'images/building',
+            hole: 'images/hole.png'// Bom đen
         };
 
         // Đối tượng lưu trữ các Image object đã tải xong
