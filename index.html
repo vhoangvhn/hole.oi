@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hole.io Puzzle Edition - 50 Levels</title>
+    <title>Hole.io Puzzle - Image Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; }
         canvas { background-color: #e5e7eb; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); cursor: none; }
+        /* Hiệu ứng loading */
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #a855f7; animate: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen text-white p-4">
@@ -15,10 +18,15 @@
     <div id="game-container" class="w-full max-w-4xl bg-gray-900 p-6 rounded-2xl shadow-2xl border border-gray-800 relative">
         
         <div id="menu-screen" class="flex flex-col items-center justify-center py-12">
-            <h1 class="text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 animate-pulse text-center">HOLE.IO PUZZLE</h1>
-            <p class="text-sm text-purple-400 font-bold uppercase tracking-widest mb-6">Chiến dịch 50 Cấp độ Thử thách</p>
-            <p class="text-gray-400 mb-8 text-center max-w-md text-sm">Nuốt chửng các vật thể từ nhỏ đến lớn. Càng về các màn sau, số lượng vật cản và bom đỏ sẽ dày đặc hơn đòi hỏi bạn phải di chuyển cực kỳ khéo léo!</p>
-            <button id="start-btn" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-xl font-bold rounded-xl hover:scale-105 transition transform duration-200 shadow-lg cursor-pointer">
+            <h1 class="text-5xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 text-center">HOLE.IO PUZZLE</h1>
+            <p class="text-sm text-purple-400 font-bold uppercase tracking-widest mb-10">Image Edition - 50 Levels</p>
+            
+            <div id="loading-area" class="flex flex-col items-center mb-8">
+                <div class="spinner mb-4"></div>
+                <p class="text-gray-400 text-sm">Đang tải hình ảnh vũ trụ...</p>
+            </div>
+
+            <button id="start-btn" class="hidden px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-xl font-bold rounded-xl hover:scale-105 transition transform duration-200 shadow-lg cursor-pointer transition-opacity duration-500 opacity-0">
                 BẮT ĐẦU CHIẾN DỊCH
             </button>
         </div>
@@ -47,8 +55,6 @@
             <div class="relative flex justify-center">
                 <canvas id="gameCanvas" width="800" height="500"></canvas>
             </div>
-            
-            <p class="text-center text-xs text-gray-500 mt-3">Di chuyển chuột để điều khiển hố đen. Các vật thể có viền đỏ nghĩa là bạn chưa đủ lớn để nuốt!</p>
         </div>
 
         <div id="result-overlay" class="hidden absolute inset-0 bg-black/80 rounded-2xl flex flex-col items-center justify-center p-6 z-10">
@@ -63,12 +69,55 @@
     </div>
 
     <script>
+        // --- CẤU HÌNH & QUẢN LÝ TÀI NGUYÊN HÌNH ẢNH ---
+        // BẠN THAY ĐỔI ĐƯỜNG DẪN ẢNH TẠI ĐÂY
+        // Hiện tại đang dùng ảnh SVG Base64 để code chạy ngay không cần file ngoài.
+        const assetsConfig = {
+            food: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0OCIgZmlsbD0iI2ZiYmYyNCIgc3Ryb2tlPSIjYjc3OTFmIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjQwIiByPSIxNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjUpIi8+PC9zdmc+', // Quả cầu vàng
+            box: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iOTAiIGhlaWdodD0iOTAiIHJ4PSIxMCIgZmlsbD0iI2Y1OWUwYiIgc3Ryb2tlPSIjYjc3OTFmIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJTTTUgMzBMOTUgMzBNTTUgNzBMOTUgNzBNTTMwIDVMMzAgOTVNTTcwIDVMNzAgOTUiIHN0cm9rZT0iI2I3NzkxZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+PC9zdmc+', // Thùng gỗ
+            truck: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSI1IiB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzNiODJmNiIvPjxyZWN0IHg9IjY1IiB5PSIzNSIgd2lkdGg9IjMwIiBoZWlnaHQ9IjQ1IiByeD0iNSIgZmlsbD0iIzNkOGVmOSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iODAiIHI9IjEwIiBmaWxsPSIjMzMzIi8+PGNpcmNsZSBjeD0iODAiIGN5PSI4MCIgcj0iMTAiIGZpbGw9IzMzMyIvPjwvc3ZnPg==', // Xe tải xanh
+            building: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB4PSIxMCIgeT0iNSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjkwIiByeD0iNSIgZmlsbD0iIzEwYjk4MSIgc3Ryb2tlPSIjMDY1ZjQ2IiBzdHJva2Utd2lkdGg9IjQiLz48cmVjdCB4PSIyNSIgeT0iMjAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjYwIiB5PSIyMCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjI1IiB5PSI1MCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjxyZWN0IHg9IjYwIiB5PSI1MCIgd2lkdGg9IjIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iI2FmZjRmZiIvPjwvc3ZnPg==', // Tòa nhà xanh
+            bomb: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjYwIiByPSIzOCIgZmlsbD0iIzMzMyIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJTTTUwIDIyIEw1MCA1IiBzdHJva2U9IiNmNTllMGIiIHN0cm9rZS13aWR0aD0iNiIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNSIgcj0iNSIgZmlsbD0iI2VmNDQ0NCIvPjxjaXJjbGUgY3g9IjcwIiBjeT0iNDAiIHI9IjEwIiBmaWxsPSJ4Z2JhKDI1NSwyNTUsMjU1LDAuMykiLz48L3N2Zz4=' // Bom đen
+        };
+
+        // Đối tượng lưu trữ các Image object đã tải xong
+        const loadedImages = {};
+
+        // Hàm tải toàn bộ hình ảnh
+        function loadAllAssets(callback) {
+            let loadedCount = 0;
+            const keys = Object.keys(assetsConfig);
+            const totalCount = keys.length;
+
+            if (totalCount === 0) { callback(); return; }
+
+            keys.forEach(key => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedCount++;
+                    // Khi tất cả ảnh đã tải xong, gọi callback để hiện nút Start
+                    if (loadedCount === totalCount) { callback(); }
+                };
+                img.onerror = () => {
+                    console.error("Không thể tải hình ảnh cho: " + key);
+                    loadedCount++; // Vẫn đếm để tránh kẹt loading, nhưng ảnh sẽ không hiện
+                    if (loadedCount === totalCount) { callback(); }
+                };
+                img.src = assetsConfig[key];
+                loadedImages[key] = img; // Lưu vào kho
+            });
+        }
+        // --------------------------------------------------
+
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
         const menuScreen = document.getElementById('menu-screen');
         const playScreen = document.getElementById('play-screen');
         const resultOverlay = document.getElementById('result-overlay');
+        const loadingArea = document.getElementById('loading-area');
+        const startBtn = document.getElementById('start-btn');
 
         const levelTxt = document.getElementById('level-txt');
         const sizeTxt = document.getElementById('size-txt');
@@ -78,7 +127,7 @@
         const resultTitle = document.getElementById('result-title');
         const resultDesc = document.getElementById('result-desc');
 
-        document.getElementById('start-btn').addEventListener('click', () => startGame(1));
+        startBtn.addEventListener('click', () => startGame(1));
         document.getElementById('restart-btn').addEventListener('click', () => startGame(currentLevel));
         document.getElementById('next-btn').addEventListener('click', () => startGame(currentLevel + 1));
 
@@ -91,79 +140,43 @@
         let mouse = { x: 400, y: 250 };
         let items = [];
 
-        // ========================================================================
-        // THUẬT TOÁN ĐỘNG CƠ TỰ ĐỘNG TẠO 50 MÀN CHƠI (PROCEDURAL LEVEL GENERATOR)
-        // ========================================================================
+        // --- Khởi tạo dữ liệu 50 màn chơi ---
         const levelsData = {};
-        
         for (let i = 1; i <= 50; i++) {
             let levelItems = [];
-            let virtualHoleSize = 16; // Giả lập kích thước hố để tính toán cân bằng điểm số
-            
-            // Số lượng vật thể tăng tiến dần theo cấp độ màn chơi (i)
-            let numTier1 = 5 + Math.floor(i * 0.4);            // Mồi siêu nhỏ (r=8) -> Ăn được ngay lập tức
-            let numTier2 = i >= 2 ? 3 + Math.floor(i * 0.3) : 0;  // Mồi vừa (r=15) -> Hố cần đạt kích thước > 15
-            let numTier3 = i >= 5 ? 2 + Math.floor(i * 0.2) : 0;  // Mồi lớn (r=26) -> Hố cần đạt kích thước > 26
-            let numTier4 = i >= 12 ? 1 + Math.floor(i * 0.15) : 0; // Siêu mồi (r=42) -> Hố cần đạt kích thước > 42
-
-            // Hàm sinh tọa độ ngẫu nhiên trên canvas (Tránh sát mép biên)
+            let virtualHoleSize = 16;
+            let numTier1 = 5 + Math.floor(i * 0.4);
+            let numTier2 = i >= 2 ? 3 + Math.floor(i * 0.3) : 0;
+            let numTier3 = i >= 5 ? 2 + Math.floor(i * 0.2) : 0;
+            let numTier4 = i >= 12 ? 1 + Math.floor(i * 0.15) : 0;
             const randX = () => 60 + Math.random() * 680;
             const randY = () => 60 + Math.random() * 380;
-
-            // Tiến trình giả lập phân phối mồi để tính toán toán học chính xác:
-            // 1. Thêm mồi Tier 1
-            for (let j = 0; j < numTier1; j++) {
-                levelItems.push({ x: randX(), y: randY(), r: 8, color: '#fbbf24', type: 'food' });
-                virtualHoleSize += 8 * 0.5; // Tăng trưởng thực tế khi nuốt
-            }
-            // 2. Thêm mồi Tier 2
-            for (let j = 0; j < numTier2; j++) {
-                levelItems.push({ x: randX(), y: randY(), r: 15, color: '#f59e0b', type: 'box' });
-                if (virtualHoleSize > 15) virtualHoleSize += 15 * 0.5;
-            }
-            // 3. Thêm mồi Tier 3
-            for (let j = 0; j < numTier3; j++) {
-                levelItems.push({ x: randX(), y: randY(), r: 26, color: '#3b82f6', type: 'truck' });
-                if (virtualHoleSize > 26) virtualHoleSize += 26 * 0.5;
-            }
-            // 4. Thêm mồi Tier 4
-            for (let j = 0; j < numTier4; j++) {
-                levelItems.push({ x: randX(), y: randY(), r: 42, color: '#10b981', type: 'building' });
-                if (virtualHoleSize > 42) virtualHoleSize += 42 * 0.5;
-            }
-
-            // ĐẶT MỤC TIÊU KÍCH THƯỚC: Bằng 85% tổng giới hạn tăng trưởng tối đa có thể đạt được
+            for (let j = 0; j < numTier1; j++) { levelItems.push({ x: randX(), y: randY(), r: 8, type: 'food' }); virtualHoleSize += 8 * 0.5; }
+            for (let j = 0; j < numTier2; j++) { levelItems.push({ x: randX(), y: randY(), r: 15, type: 'box' }); if (virtualHoleSize > 15) virtualHoleSize += 15 * 0.5; }
+            for (let j = 0; j < numTier3; j++) { levelItems.push({ x: randX(), y: randY(), r: 26, type: 'truck' }); if (virtualHoleSize > 26) virtualHoleSize += 26 * 0.5; }
+            for (let j = 0; j < numTier4; j++) { levelItems.push({ x: randX(), y: randY(), r: 42, type: 'building' }); if (virtualHoleSize > 42) virtualHoleSize += 42 * 0.5; }
             let calculatedTarget = Math.floor(16 + (virtualHoleSize - 16) * 0.85);
-            // Bảo vệ mức tối thiểu cho các level đầu tiên không bị quá dễ
             let finalTargetSize = Math.max(32 + (i * 2), calculatedTarget);
-
-            // CẤU HÌNH THỜI GIAN: Bắt đầu từ 35 giây, giảm dần hoặc tăng nhẹ dựa trên mật độ vật thể
             let duration = Math.max(20, 35 + Math.floor(i * 0.3) - Math.floor(i / 4));
-
-            // THÊM BOM QUẢ NGẠC lÔI (BẮT ĐẦU TỪ MÀN 3)
             if (i >= 3) {
-                // Số lượng bom tăng dần từ 1 quả lên tối đa 14 quả ở màn 50
                 let numBombs = Math.min(14, Math.floor(i / 4) + 1);
                 for (let j = 0; j < numBombs; j++) {
                     let bx, by;
-                    // Đảm bảo thuật toán không rải bom đè trúng điểm xuất phát của hố đen (400, 250)
-                    do {
-                        bx = 80 + Math.random() * 640;
-                        by = 80 + Math.random() * 340;
-                    } while (Math.abs(bx - 400) < 110 && Math.abs(by - 250) < 110);
-
-                    levelItems.push({ x: bx, y: by, r: 12, color: '#ef4444', type: 'bomb' });
+                    do { bx = 80 + Math.random() * 640; by = 80 + Math.random() * 340; } while (Math.abs(bx - 400) < 110 && Math.abs(by - 250) < 110);
+                    levelItems.push({ x: bx, y: by, r: 12, type: 'bomb' });
                 }
             }
-
-            // Lưu trữ dữ liệu cấu trúc màn chơi vào danh sách tổng
-            levelsData[i] = {
-                targetSize: finalTargetSize,
-                duration: duration,
-                items: levelItems
-            };
+            levelsData[i] = { targetSize: finalTargetSize, duration: duration, items: levelItems };
         }
-        // ========================================================================
+
+        // --- BẮT ĐẦU CHƯƠNG TRÌNH: Tải ảnh trước khi hiện Menu ---
+        loadAllAssets(() => {
+            // Khi ảnh tải xong, ẩn spinner và hiện nút Start
+            loadingArea.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            setTimeout(() => { startBtn.classList.remove('opacity-0'); }, 50); // Hiệu ứng fade-in nhẹ
+        });
+        // -------------------------------------------------------
 
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -173,53 +186,37 @@
 
         function startGame(level) {
             if (level > 50) {
-                showResult(true, "THẦN THÁNH PHÁ ĐẢO!", "Kinh điển! Bạn đã chinh phục hoàn toàn chuỗi 50 thử thách giải đố.");
-                document.getElementById('next-btn').classList.add('hidden');
+                endGame(true, "THẦN THÁNH PHÁ ĐẢO!", "Kinh điển! Bạn đã chinh phục hoàn toàn 50 thử thách.");
                 return;
             }
-
             currentLevel = level;
             const levelData = levelsData[currentLevel];
-            
             isPlaying = true;
             timeLeft = levelData.duration;
-            items = JSON.parse(JSON.stringify(levelData.items)); // Khởi tạo clone bản đồ màn chơi
-            hole.radius = 16;
-            hole.targetRadius = 16;
-            hole.x = 400;
-            hole.y = 250;
-
+            items = JSON.parse(JSON.stringify(levelData.items)); 
+            hole.radius = 16; hole.targetRadius = 16; hole.x = 400; hole.y = 250;
             levelTxt.innerText = currentLevel + "/50";
             targetTxt.innerText = levelData.targetSize;
             menuScreen.classList.add('hidden');
             resultOverlay.classList.add('hidden');
             playScreen.classList.remove('hidden');
             document.getElementById('next-btn').classList.remove('hidden');
-
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if (!isPlaying) return;
                 timeLeft--;
                 timerTxt.innerText = timeLeft + "s";
-                if (timeLeft <= 0) {
-                    endGame(false, "HẾT GIỜ!", `Thất bại ở màn ${currentLevel}. Bạn không kịp lớn lên trước khi hết thời gian.`);
-                }
+                if (timeLeft <= 0) endGame(false, "HẾT GIỜ!", `Thất bại ở màn ${currentLevel}.`);
             }, 1000);
-
             requestAnimationFrame(gameLoop);
         }
 
         function endGame(isWin, title, desc) {
             isPlaying = false;
             clearInterval(timerInterval);
-            showResult(isWin, title, desc);
-        }
-
-        function showResult(isWin, title, desc) {
             resultTitle.innerText = title;
             resultTitle.className = `text-4xl font-black mb-2 tracking-wide ${isWin ? 'text-green-400' : 'text-red-500'}`;
             resultDesc.innerText = desc;
-            
             if (isWin) {
                 document.getElementById('next-btn').classList.remove('hidden');
                 document.getElementById('next-btn').innerText = currentLevel === 50 ? "Xem kết quả tổng" : "Màn tiếp theo";
@@ -237,78 +234,71 @@
         }
 
         function updatePhysics() {
-            // Easing giúp hố di chuyển bám chuột mượt mà mướt mắt
             hole.x += (mouse.x - hole.x) * 0.12;
             hole.y += (mouse.y - hole.y) * 0.12;
-
-            // Tạo độ giãn nở kích thước từ từ khi nuốt mồi
             if (hole.radius < hole.targetRadius) hole.radius += 0.4;
-
             const currentLevelData = levelsData[currentLevel];
-
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
                 let dx = hole.x - item.x;
                 let dy = hole.y - item.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
-
-                // Khi tâm vật thể lọt vào phạm vi bán kính của hố
                 if (distance < hole.radius) {
-                    if (item.type === 'bomb') {
-                        endGame(false, "BÙM CHÁT!", "Trúng thiết kế bẫy bom rồi! Hãy cẩn thận hơn ở lượt chơi kế tiếp.");
-                        return;
-                    } 
+                    if (item.type === 'bomb') { endGame(false, "BÙM CHÁT!", "Trúng bẫy bom rồi!"); return; } 
                     else if (hole.radius > item.r) {
-                        // Hố to hơn vật thể -> Hút thành công!
-                        hole.targetRadius += item.r * 0.5; // Tăng trưởng 50% kích thước vật nuốt được
+                        hole.targetRadius += item.r * 0.5; 
                         items.splice(i, 1); 
                     }
                 }
             }
-
-            // Tính toán thanh tiến trình HUD
             let progress = ((hole.radius - 16) / (currentLevelData.targetSize - 16)) * 100;
             progressBar.style.width = Math.min(progress, 100) + "%";
             sizeTxt.innerText = Math.floor(hole.radius);
-
-            // Điều kiện chiến thắng màn chơi
-            if (hole.radius >= currentLevelData.targetSize) {
-                endGame(true, "VƯỢT ẢI THÀNH CÔNG!", `Chúc mừng bạn đã chinh phục Cấp độ ${currentLevel}!`);
-            }
+            if (hole.radius >= currentLevelData.targetSize) endGame(true, "VƯỢT ẢI THÀNH CÔNG!", `Chinh phục Cấp độ ${currentLevel}!`);
         }
 
+        // ==========================================================
+        // --- PHẦN VẼ CANVAS - NƠI THAY ĐỔI VÒNG TRÒN THÀNH ẢNH ---
+        // ==========================================================
         function drawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Vẽ các vật thể/Mồi puzzle
+            // 1. Vẽ các vật thể/Mồi puzzle bằng HÌNH ẢNH
             items.forEach(item => {
-                ctx.beginPath();
-                ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
-                ctx.fillStyle = item.color;
-                ctx.fill();
-                
-                // Nếu là mồi thường nhưng hố hiện tại chưa đủ to để nuốt -> Hiện viền đỏ cảnh báo
-                if (item.type !== 'bomb' && hole.radius <= item.r) {
-                    ctx.strokeStyle = '#ef4444';
-                    ctx.lineWidth = 2.5;
-                    ctx.stroke();
+                const img = loadedImages[item.type]; // Lấy ảnh tương ứng với loại vật thể
+
+                if (img) {
+                    // Vẽ hình ảnh thay vì vòng tròn
+                    // Lưu ý: Tọa độ canvas (item.x, item.y) là tâm vật thể.
+                    // drawImage vẽ từ góc trên bên trái, nên cần trừ đi bán kính r.
+                    const diameter = item.r * 2;
+                    ctx.drawImage(img, item.x - item.r, item.y - item.r, diameter, diameter);
                 }
-                ctx.closePath();
+
+                // Nếu là mồi thường nhưng hố hiện tại chưa đủ to để nuốt -> Hiện viền đỏ cảnh báo (vẽ đè lên ảnh)
+                if (item.type !== 'bomb' && hole.radius <= item.r) {
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.closePath();
+                }
             });
 
-            // 2. Vẽ hiệu ứng Hố Đen Vũ Trụ
+            // 2. Vẽ Hố Đen (Vẫn giữ nguyên vòng tròn hiệu ứng)
             ctx.beginPath();
             ctx.arc(hole.x, hole.y, hole.radius + 4, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(147, 51, 234, 0.35)'; // Viền hào quang tím của hố
+            ctx.fillStyle = 'rgba(147, 51, 234, 0.35)';
             ctx.fill();
             ctx.closePath();
-
             ctx.beginPath();
             ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#111827'; // Lõi hố sâu hút
+            ctx.fillStyle = '#111827';
             ctx.fill();
             ctx.closePath();
         }
+        // ==========================================================
     </script>
 </body>
 </html>
