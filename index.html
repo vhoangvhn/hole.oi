@@ -9,7 +9,7 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; }
         canvas { background-color: #e5e7eb; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); cursor: none; }
         /* Hiệu ứng loading */
-        .spinner { border: 4px solid rgba(255, 255, 255, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #a855f7; animate: spin 1s linear infinite; }
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #a855f7; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -70,15 +70,13 @@
 
     <script>
         // --- CẤU HÌNH & QUẢN LÝ TÀI NGUYÊN HÌNH ẢNH ---
-        // BẠN THAY ĐỔI ĐƯỜNG DẪN ẢNH TẠI ĐÂY
-        // Hiện tại đang dùng ảnh SVG Base64 để code chạy ngay không cần file ngoài.
         const assetsConfig = {
-            food: 'images/food.png', // Quả cầu vàng
-            box: 'images/box.png', // Thùng gỗ
-            truck: 'images/truck.png', // Xe tải xanh
+            food: 'images/food.png',       // Quả cầu vàng
+            box: 'images/box.png',         // Thùng gỗ
+            truck: 'images/truck.png',     // Xe tải xanh
             building: 'images/building.png', // Tòa nhà xanh
-            bomb: 'images/bomb.png',
-            hole: 'images/hole.png'// Bom đen
+            bomb: 'images/bomb.png',       // Quả bom
+            hole: 'images/hole.png'        // Hình ảnh hố đen người chơi
         };
 
         // Đối tượng lưu trữ các Image object đã tải xong
@@ -96,20 +94,17 @@
                 const img = new Image();
                 img.onload = () => {
                     loadedCount++;
-                    // Khi tất cả ảnh đã tải xong, gọi callback để hiện nút Start
                     if (loadedCount === totalCount) { callback(); }
                 };
                 img.onerror = () => {
                     console.error("Không thể tải hình ảnh cho: " + key);
-                    loadedCount++; // Vẫn đếm để tránh kẹt loading, nhưng ảnh sẽ không hiện
+                    loadedCount++; 
                     if (loadedCount === totalCount) { callback(); }
                 };
                 img.src = assetsConfig[key];
-                loadedImages[key] = img; // Lưu vào kho
+                loadedImages[key] = img; 
             });
         }
-        // --------------------------------------------------
-
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -152,13 +147,16 @@
             let numTier4 = i >= 12 ? 1 + Math.floor(i * 0.15) : 0;
             const randX = () => 60 + Math.random() * 680;
             const randY = () => 60 + Math.random() * 380;
+            
             for (let j = 0; j < numTier1; j++) { levelItems.push({ x: randX(), y: randY(), r: 8, type: 'food' }); virtualHoleSize += 8 * 0.5; }
             for (let j = 0; j < numTier2; j++) { levelItems.push({ x: randX(), y: randY(), r: 15, type: 'box' }); if (virtualHoleSize > 15) virtualHoleSize += 15 * 0.5; }
-            for (let j = 0; j < numTier3; j++) { levelItems.push({ x: randX(), y: randY(), r: 26, type: 'truck' }); if (virtualHoleSize > 26) virtualHoleSize += 26 * 0.5; }
-            for (let j = 0; j < numTier4; j++) { levelItems.push({ x: randX(), y: randY(), r: 42, type: 'building' }); if (virtualHoleSize > 42) virtualHoleSize += 42 * 0.5; }
+            for (let j = 0; j < numTier3; j++) { levelItems.push({ x: randX(), y: randY(), r: 24, type: 'truck' }); if (virtualHoleSize > 24) virtualHoleSize += 24 * 0.5; }
+            for (let j = 0; j < numTier4; j++) { levelItems.push({ x: randX(), y: randY(), r: 32, type: 'building' }); if (virtualHoleSize > 32) virtualHoleSize += 32 * 0.5; }
+            
             let calculatedTarget = Math.floor(16 + (virtualHoleSize - 16) * 0.85);
             let finalTargetSize = Math.max(32 + (i * 2), calculatedTarget);
             let duration = Math.max(20, 35 + Math.floor(i * 0.3) - Math.floor(i / 4));
+            
             if (i >= 3) {
                 let numBombs = Math.min(14, Math.floor(i / 4) + 1);
                 for (let j = 0; j < numBombs; j++) {
@@ -170,14 +168,12 @@
             levelsData[i] = { targetSize: finalTargetSize, duration: duration, items: levelItems };
         }
 
-        // --- BẮT ĐẦU CHƯƠNG TRÌNH: Tải ảnh trước khi hiện Menu ---
+        // --- Tải ảnh trước khi hiện Menu ---
         loadAllAssets(() => {
-            // Khi ảnh tải xong, ẩn spinner và hiện nút Start
             loadingArea.classList.add('hidden');
             startBtn.classList.remove('hidden');
-            setTimeout(() => { startBtn.classList.remove('opacity-0'); }, 50); // Hiệu ứng fade-in nhẹ
+            setTimeout(() => { startBtn.classList.remove('opacity-0'); }, 50);
         });
-        // -------------------------------------------------------
 
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -258,25 +254,20 @@
             if (hole.radius >= currentLevelData.targetSize) endGame(true, "VƯỢT ẢI THÀNH CÔNG!", `Chinh phục Cấp độ ${currentLevel}!`);
         }
 
-        // ==========================================================
-        // --- PHẦN VẼ CANVAS - NƠI THAY ĐỔI VÒNG TRÒN THÀNH ẢNH ---
-        // ==========================================================
+        // --- PHẦN VẼ CANVAS ---
         function drawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 1. Vẽ các vật thể/Mồi puzzle bằng HÌNH ẢNH
             items.forEach(item => {
-                const img = loadedImages[item.type]; // Lấy ảnh tương ứng với loại vật thể
+                const img = loadedImages[item.type]; 
 
                 if (img) {
-                    // Vẽ hình ảnh thay vì vòng tròn
-                    // Lưu ý: Tọa độ canvas (item.x, item.y) là tâm vật thể.
-                    // drawImage vẽ từ góc trên bên trái, nên cần trừ đi bán kính r.
                     const diameter = item.r * 2;
                     ctx.drawImage(img, item.x - item.r, item.y - item.r, diameter, diameter);
                 }
 
-                // Nếu là mồi thường nhưng hố hiện tại chưa đủ to để nuốt -> Hiện viền đỏ cảnh báo (vẽ đè lên ảnh)
+                // Cảnh báo nếu hố nhỏ hơn mồi
                 if (item.type !== 'bomb' && hole.radius <= item.r) {
                     ctx.beginPath();
                     ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
@@ -287,28 +278,27 @@
                 }
             });
 
-            // 2. Vẽ Hố Đen (Vẫn giữ nguyên vòng tròn hiệu ứng)
+            // 2. Vẽ Hố Đen (Người chơi)
+            // --- A. Vẽ Aura hào quang ---
             ctx.beginPath();
-            ctx.arc(hole.x, hole.y, hole.radius + 6, 0, Math.PI * 2); // Aura rộng hơn chút
-            ctx.fillStyle = 'rgba(168, 85, 247, 0.2)'; // Màu tím nhạt mờ hơn
+            ctx.arc(hole.x, hole.y, hole.radius + 6, 0, Math.PI * 2); 
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.2)'; 
             ctx.fill();
             ctx.closePath();
 
             // --- B. Vẽ Hình ảnh Hố ---
-            const holeImg = loadedImages['hole']; // Lấy ảnh hố từ kho
+            const holeImg = loadedImages['hole']; 
             if (holeImg) {
                 const diameter = hole.radius * 2;
-                // drawImage vẽ từ góc trên-trái. Ta cần lấy tâm trừ đi bán kính.
                 ctx.drawImage(holeImg, hole.x - hole.radius, hole.y - hole.radius, diameter, diameter);
             } else {
-                // Phóng fallback nếu ảnh không load được (vẽ lõi đen cũ)
                 ctx.beginPath();
                 ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#111827';
                 ctx.fill();
                 ctx.closePath();
-        }
-        // ==========================================================
+            }
+        } // <--- ĐÃ SỬA LỖI: Bổ sung dấu đóng ngoặc đóng hàm tại đây
     </script>
 </body>
 </html>
