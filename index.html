@@ -233,7 +233,7 @@
         function updatePhysics() {
             hole.x += (mouse.x - hole.x) * 0.12;
             hole.y += (mouse.y - hole.y) * 0.12;
-            if (hole.radius < hole.targetRadius) hole.radius += 0.1;
+            if (hole.radius < hole.targetRadius) hole.radius += 1;
             const currentLevelData = levelsData[currentLevel];
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
